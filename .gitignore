@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environments and local configuration
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# External data
+data/*
+!data/README.md
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.jsonl
+
+# Model checkpoints and experiment tracking
+models/*
+!models/README.md
+checkpoint-*/
+saved-model/
+output/
+runs/
+wandb/
+mlruns/
+lightning_logs/
+*.bin
+*.ckpt
+*.h5
+*.keras
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.tflite
+
+# Archives and temporary files
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+*.tmp
+*.temp
+*.log
+~$*
