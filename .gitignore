@@ -30,6 +30,7 @@ Thumbs.db
 data/*
 !data/README.md
 *.csv
+!outputs/*.csv
 *.tsv
 *.xlsx
 *.xls

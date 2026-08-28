@@ -1,0 +1,9 @@
+accelerate>=1.10,<2
+jupyterlab>=4.4,<5
+nltk>=3.9,<4
+numpy>=2.0,<3
+pandas>=2.2,<3
+scikit-learn>=1.5,<2
+sentencepiece>=0.2,<1
+torch>=2.5,<3
+transformers>=4.48,<5
