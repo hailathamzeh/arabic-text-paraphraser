@@ -20,5 +20,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install notebook schema validator
+        run: python -m pip install "nbformat==5.10.4" "nbconvert==7.17.1"
+
       - name: Validate files and notebooks
         run: python tools/validate_repository.py
+
+      - name: Render notebooks
+        run: jupyter nbconvert --to html --output-dir /tmp/notebook-previews notebooks/*.ipynb

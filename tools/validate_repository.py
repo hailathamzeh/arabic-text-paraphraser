@@ -101,6 +101,13 @@ TEXT_SUFFIXES = {
     ".yaml",
 }
 
+NOTEBOOK_OUTPUT_REQUIRED_FIELDS = {
+    "display_data": {"data", "metadata", "output_type"},
+    "error": {"ename", "evalue", "output_type", "traceback"},
+    "execute_result": {"data", "execution_count", "metadata", "output_type"},
+    "stream": {"name", "output_type", "text"},
+}
+
 
 def repository_files() -> list[Path]:
     return sorted(
@@ -156,7 +163,41 @@ def validate_notebook(path: Path, errors: list[str]) -> None:
         add_error(errors, path, "unexpected notebook structure")
         return
 
+    try:
+        import nbformat
+    except ModuleNotFoundError:
+        nbformat = None
+
+    if nbformat is not None:
+        try:
+            nbformat.validate(notebook)
+        except Exception as exc:
+            message = getattr(exc, "message", str(exc)).splitlines()[0]
+            add_error(errors, path, f"nbformat schema validation failed: {message}")
+
+    cell_ids: set[str] = set()
     for index, cell in enumerate(notebook["cells"]):
+        required_cell_fields = {"cell_type", "id", "metadata", "source"}
+        if cell.get("cell_type") == "code":
+            required_cell_fields.update({"execution_count", "outputs"})
+        missing_cell_fields = sorted(required_cell_fields.difference(cell))
+        if missing_cell_fields:
+            add_error(
+                errors,
+                path,
+                f"cell {index} is missing fields: {', '.join(missing_cell_fields)}",
+            )
+        if not isinstance(cell.get("metadata"), dict):
+            add_error(errors, path, f"cell {index} metadata must be an object")
+
+        cell_id = cell.get("id")
+        if not isinstance(cell_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", cell_id):
+            add_error(errors, path, f"cell {index} has an invalid id")
+        elif cell_id in cell_ids:
+            add_error(errors, path, f"cell {index} has a duplicate id")
+        else:
+            cell_ids.add(cell_id)
+
         source = "".join(cell.get("source", []))
         for label, pattern in LOCAL_PATH_PATTERNS.items():
             if pattern.search(source):
@@ -166,6 +207,33 @@ def validate_notebook(path: Path, errors: list[str]) -> None:
                 ast.parse(source or "\n")
             except SyntaxError as exc:
                 add_error(errors, path, f"cell {index} has invalid Python syntax: {exc.msg}")
+
+        for output_index, output in enumerate(cell.get("outputs", [])):
+            output_type = output.get("output_type")
+            required_output_fields = NOTEBOOK_OUTPUT_REQUIRED_FIELDS.get(output_type)
+            if required_output_fields is None:
+                add_error(
+                    errors,
+                    path,
+                    f"cell {index} output {output_index} has an unknown output type",
+                )
+                continue
+            missing_output_fields = sorted(required_output_fields.difference(output))
+            if missing_output_fields:
+                add_error(
+                    errors,
+                    path,
+                    f"cell {index} output {output_index} is missing fields: "
+                    + ", ".join(missing_output_fields),
+                )
+            if output_type in {"display_data", "execute_result"} and not isinstance(
+                output.get("metadata"), dict
+            ):
+                add_error(
+                    errors,
+                    path,
+                    f"cell {index} output {output_index} metadata must be an object",
+                )
 
         output_text = json.dumps(cell.get("outputs", []), ensure_ascii=False)
         for label, pattern in LOCAL_PATH_PATTERNS.items():

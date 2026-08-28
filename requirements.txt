@@ -1,6 +1,8 @@
 accelerate>=1.10,<2
 jupyterlab>=4.4,<5
 nltk>=3.9,<4
+nbconvert>=7.17,<8
+nbformat>=5.10,<6
 numpy>=2.0,<3
 pandas>=2.2,<3
 scikit-learn>=1.5,<2
